@@ -22,34 +22,35 @@ export const reducer = (state: State, action: SortActionType): State => {
   let orderBy = state.orderBy;
   let data = [...state.data];
 
-  if (action.type === SortOrderType.OrderBy) {
-    orderBy = action.value;
-  }
+  switch (action.type) {
+    case SortOrderType.Order:
+      order = state.order === 'asc' ? 'desc' : 'asc';
+      data = order === 'asc' ? data.reverse() : data;
+      break;
+    case SortOrderType.OrderBy:
+      orderBy = action.value;
+      data = data.sort((a, b) => {
+        const property = orderBy as keyof Pick<
+          Transaction,
+          'type' | 'time' | 'status' | 'localizableTitle'
+        >;
 
-  if (orderBy && action.type === SortOrderType.OrderBy) {
-    data = data.sort((a, b) => {
-      const property = orderBy as keyof Pick<
-        Transaction,
-        'type' | 'time' | 'status' | 'localizableTitle'
-      >;
+        if (b[property] > a[property]) {
+          return 1;
+        }
+        if (b[property] < a[property]) {
+          return -1;
+        }
+        return 0;
+      });
+      break;
 
-      if (b[property] > a[property]) {
-        return 1;
-      }
-      if (b[property] < a[property]) {
-        return -1;
-      }
-      return 0;
-    });
-  }
+    case SortOrderType.Delete:
+      data = [...data.filter((transaction) => transaction.id !== action.value)];
+      break;
 
-  if (action.type === SortOrderType.Delete) {
-    data = [...data.filter((transaction) => transaction.id !== action.value)];
-  }
-
-  if (action.type === SortOrderType.Order) {
-    order = state.order === 'asc' ? 'desc' : 'asc';
-    data = order === 'asc' ? data.reverse() : data;
+    default:
+      break;
   }
 
   return {
